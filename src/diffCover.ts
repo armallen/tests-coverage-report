@@ -1,12 +1,12 @@
+import * as core from '@actions/core';
 import {
-  FilesStatus,
-  EventInfo,
   CoverageTypeInfo,
-  DiffInfo,
   DiffCoverRef,
+  DiffInfo,
+  EventInfo,
+  FilesStatus,
 } from './types';
 import { execCommand } from './utils';
-import * as core from '@actions/core';
 
 export const diffCover = async (
   eventInfo: EventInfo,
@@ -56,19 +56,28 @@ const getDiff = async (
               currFile.includes(fileCoverInfo.file) ||
               fileCoverInfo.file.includes(currFile)
             ) {
-              const misses = changedLines.filter(
+              // Check if all executable lines are missed (i.e., file is untested)
+              const allMissed = fileCoverInfo.lines.details.every((details) => details.hit === 0);
+              let misses = changedLines.filter(
                 (changedLine: string) =>
                   fileCoverInfo.lines.details.find(
                     (details) => details.line === +changedLine,
                   )?.hit === 0,
               );
+              let coveragePercent = 0;
+              if (!allMissed && changedLines.length > 0) {
+                coveragePercent = Math.round(
+                  (1 - misses.length / changedLines.length) * 100,
+                );
+              }
+              // If all lines are missed, coverage is 0%
+              if (allMissed) {
+                misses = changedLines;
+                coveragePercent = 0;
+              }
               core.info(`diffCover on file=${currFile}`);
               core.info(`misses: [${misses}]`);
-              core.info(
-                `coverage: ${Math.round(
-                  (1 - misses.length / changedLines.length) * 100,
-                )}%`,
-              );
+              core.info(`coverage: ${coveragePercent}%`);
               diffInfo.push({
                 file: currFile,
                 missedLines: misses,
