@@ -1,12 +1,12 @@
+import * as core from '@actions/core';
 import {
-  FilesStatus,
-  EventInfo,
   CoverageTypeInfo,
-  DiffInfo,
   DiffCoverRef,
+  DiffInfo,
+  EventInfo,
+  FilesStatus,
 } from './types';
 import { execCommand } from './utils';
-import * as core from '@actions/core';
 
 export const diffCover = async (
   eventInfo: EventInfo,
@@ -56,12 +56,13 @@ const getDiff = async (
               currFile.includes(fileCoverInfo.file) ||
               fileCoverInfo.file.includes(currFile)
             ) {
-              const misses = changedLines.filter(
-                (changedLine: string) =>
-                  fileCoverInfo.lines.details.find(
-                    (details) => details.line === +changedLine,
-                  )?.hit === 0,
-              );
+              const misses = changedLines.filter((changedLine: string) => {
+                const detail = fileCoverInfo.lines.details.find(
+                  (details) => details.line === +changedLine,
+                );
+                // Miss if line is not found in coverage OR hit is 0
+                return !detail || detail.hit === 0;
+              });
               core.info(`diffCover on file=${currFile}`);
               core.info(`misses: [${misses}]`);
               core.info(
