@@ -60,6 +60,8 @@ const getDiff = async (
                 const detail = fileCoverInfo.lines.details.find(
                   (details) => details.line === +changedLine,
                 );
+                // Print detail for debugging
+                core.info(`detail: ${JSON.stringify(detail)}`);
                 // Miss if line is not found in coverage OR hit is 0
                 return !detail || detail.hit === 0;
               });
