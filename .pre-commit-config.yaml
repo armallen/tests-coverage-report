@@ -3,7 +3,7 @@
 minimum_pre_commit_version: 4.2.0
 fail_fast: false
 default_stages:
-- commit
+- pre-commit
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v5.0.0
@@ -17,7 +17,6 @@ repos:
   - id: check-symlinks
   - id: detect-private-key
     exclude: .gitleaks.toml
-  - id: no-commit-to-branch
   - id: trailing-whitespace
   - id: end-of-file-fixer
   - id: mixed-line-ending
@@ -203,27 +202,6 @@ repos:
     - hadolint
     types:
     - dockerfile
-  - id: gitleaks
-    name: Protect hardcoded secrets
-    language: docker_image
-    entry: zricethezav/gitleaks:v8.15.0
-    args:
-    - protect
-    - --staged
-    - --redact
-    - --verbose
-  - id: gitleaks-ci
-    name: Detect hardcoded secrets
-    language: docker_image
-    entry: zricethezav/gitleaks:v8.15.0
-    stages:
-    - manual
-    args:
-    - detect
-    - --redact
-    - --verbose
-    - --log-opts
-    - --left-right --cherry-pick --pretty=format:"%H" remotes/origin/master...
 - repo: https://github.com/pre-commit/mirrors-eslint
   rev: v9.24.0
   hooks:

@@ -272,8 +272,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.diffCover = void 0;
-const utils_1 = __nccwpck_require__(1507);
 const core = __importStar(__nccwpck_require__(2186));
+const utils_1 = __nccwpck_require__(1507);
 const diffCover = async (eventInfo, filesStatus, coverageInfo) => {
     if (eventInfo.showDiffcover) {
         const gitLogCommand = `git log --oneline origin/${eventInfo.baseRef}..origin/${eventInfo.headRef} -- | cut -f1 -d' '`;
@@ -305,7 +305,13 @@ const getDiff = async (coverageInfo, changedFiles, commitsSha, referral) => {
                         if (fileCoverInfo.file === currFile ||
                             currFile.includes(fileCoverInfo.file) ||
                             fileCoverInfo.file.includes(currFile)) {
-                            const misses = changedLines.filter((changedLine) => fileCoverInfo.lines.details.find((details) => details.line === +changedLine)?.hit === 0);
+                            // Print content of fileCoverInfo
+                            core.info(`fileCoverInfo: ${JSON.stringify(fileCoverInfo)}`);
+                            const misses = changedLines.filter((changedLine) => {
+                                const detail = fileCoverInfo.lines.details.find((details) => details.line === +changedLine);
+                                // Miss if line is not found in coverage OR hit is 0
+                                return !detail || detail.hit === 0;
+                            });
                             core.info(`diffCover on file=${currFile}`);
                             core.info(`misses: [${misses}]`);
                             core.info(`coverage: ${Math.round((1 - misses.length / changedLines.length) * 100)}%`);
