@@ -16,7 +16,7 @@ export const diffCover = async (
   if (eventInfo.showDiffcover) {
     const gitLogExec = await execFileCommand('git', [
       'log',
-      '--format=%h',
+      '--format=%H',
       `origin/${eventInfo.baseRef}..origin/${eventInfo.headRef}`,
       '--',
     ]);

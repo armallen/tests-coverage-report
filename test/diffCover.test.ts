@@ -116,7 +116,8 @@ describe('diffCover tests', () => {
             if (args[0] === 'log') {
               return {
                 status: 'success',
-                stdout: 'abc1234\ndef5678\n',
+                stdout:
+                  'abc1234000000000000000000000000000000000\ndef5678000000000000000000000000000000000\n',
               };
             }
             if (args[0] === 'blame' && args.includes('src/main.ts')) {
@@ -335,6 +336,28 @@ describe('parseBlameForCommits', () => {
   test('matches short 7-char SHA', () => {
     const blameOutput = 'abc1234000000000000000000000000000000000 10 10 1';
     const commitSet = new Set(['abc1234']);
+    const result = parseBlameForCommits(blameOutput, commitSet);
+    expect(result).toEqual(['10']);
+  });
+
+  test('regression: 8-char abbreviated SHA from git log --format=%h does not match', () => {
+    // When a repo has enough commits, git log --format=%h returns 8-char SHAs.
+    // The old 7-char substring logic would never match an 8-char abbreviated SHA,
+    // causing no changed lines to be detected (the bug).
+    const blameOutput = 'abc12345abcdef0123456789abcdef0123456789 10 10 1';
+    const commitSet = new Set(['abc12345']); // 8-char abbreviated SHA from %h
+    const result = parseBlameForCommits(blameOutput, commitSet);
+    // shortSha = 'abc1234' (7 chars) != 'abc12345' (8 chars), and
+    // fullSha (40 chars) != 'abc12345' (8 chars) — neither check matches
+    expect(result).toEqual([]);
+  });
+
+  test('regression: full 40-char SHA from git log --format=%H matches correctly', () => {
+    // After fixing git log to use --format=%H, the commitSet holds full SHAs,
+    // and commitSet.has(fullSha) matches the blame output directly.
+    const fullSha = 'abc12345abcdef0123456789abcdef0123456789';
+    const blameOutput = `${fullSha} 10 10 1`;
+    const commitSet = new Set([fullSha]); // full 40-char SHA from %H
     const result = parseBlameForCommits(blameOutput, commitSet);
     expect(result).toEqual(['10']);
   });
